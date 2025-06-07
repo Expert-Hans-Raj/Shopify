@@ -1,0 +1,485 @@
+<section class="featured-collection" id="featured-collection-{{ section.id }}">
+  {% assign collection = collections[section.settings.collection] %}
+  {% if collection and collection.products_count > 0 %}
+    <h2>Featured: {{ collection.title }}</h2>
+    <div class="featured-collection__grid">
+      {% for product in collection.products limit: section.settings.products_to_show %}
+        <div class="product-card" data-product-id="{{ product.id }}">
+          <img
+            src="{{ product.featured_image | img_url: '400x400' }}"
+            alt="{{ product.title }}"
+            class="product-card__image"
+          >
+          <div class="product-card__title">{{ product.title }}</div>
+          <div class="product-card__price">{{ product.price | money }}</div>
+
+          <!-- Color Swatches with Variant Handling -->
+          <div class="color-swatches" data-product-id="{{ product.id }}">
+            {% assign color_option_index = null %}
+            {% assign option_index = 0 %}
+
+            {% for option in product.options_with_values %}
+              {% if option.name == 'Color' %}
+                {% assign color_option_index = option_index %}
+                {% break %}
+              {% endif %}
+              {% assign option_index = option_index | plus: 1 %}
+            {% endfor %}
+
+            {% assign rendered_colors = '' %}
+
+            {% if product.variants.size > 0 and color_option_index != null %}
+              {% for variant in product.variants %}
+                {% assign color_value = variant.options[color_option_index] %}
+                {% unless rendered_colors contains color_value %}
+                  {% assign rendered_colors = rendered_colors | append: color_value | append: ',' %}
+                  <span
+                    class="color-swatch"
+                    title="{{ color_value }}"
+                    style="background-color: {{ color_value | downcase | escape }}; cursor: pointer;"
+                    data-variant-id="{{ variant.id }}"
+                    data-image="{{ variant.featured_image | img_url: '400x400' }}"
+                    data-product-id="{{ product.id }}"
+                  ></span>
+                {% endunless %}
+              {% endfor %}
+            {% endif %}
+          </div>
+
+          <div class="btn-wraps">
+            <button
+              class="btn-add-to-cart"
+              data-product-id="{{ product.id }}"
+              data-default-variant="{{ product.variants.first.id }}"
+            >
+              Add to Cart
+            </button>
+
+            <button class="btn-quick-view" data-product-handle="{{ product.handle }}">Quick View</button>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>No products found in this collection.</p>
+  {% endif %}
+</section>
+
+<div class="quick-view-overlay" style="display:none;">
+  <div class="quick-view-modal">
+    <button class="quick-view-close">&times;</button>
+    <div class="q-rwap-info">
+      <div class="quick-view-image"></div>
+      <h2 class="quick-view-title"></h2>
+      <div class="quick-view-price"></div>
+      <div class="quick-view-color-swatches"></div>
+      <button class="quick-view-add-to-cart">Add to Cart</button>
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "Feature Collection QV",
+  "tag": "section",
+  "class": "section",
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "t:sections.featured-collection.settings.collection.label"
+    },
+    {
+      "type": "range",
+      "id": "products_to_show",
+      "min": 2,
+      "max": 25,
+      "step": 1,
+      "default": 4,
+      "label": "t:sections.featured-collection.settings.products_to_show.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.featured-collection.settings.header_text.content"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "default": "t:sections.featured-collection.settings.title.default",
+      "label": "t:sections.featured-collection.settings.title.label"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "options": [
+        { "value": "h2", "label": "t:sections.all.heading_size.options__1.label" },
+        { "value": "h1", "label": "t:sections.all.heading_size.options__2.label" },
+        { "value": "h0", "label": "t:sections.all.heading_size.options__3.label" },
+        { "value": "hxl", "label": "t:sections.all.heading_size.options__4.label" },
+        { "value": "hxxl", "label": "t:sections.all.heading_size.options__5.label" }
+      ],
+      "default": "h1",
+      "label": "t:sections.all.heading_size.label"
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "t:sections.featured-collection.settings.description.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_description",
+      "label": "t:sections.featured-collection.settings.show_description.label",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "description_style",
+      "label": "t:sections.featured-collection.settings.description_style.label",
+      "options": [
+        { "value": "body", "label": "t:sections.featured-collection.settings.description_style.options__1.label" },
+        { "value": "subtitle", "label": "t:sections.featured-collection.settings.description_style.options__2.label" },
+        { "value": "uppercase", "label": "t:sections.featured-collection.settings.description_style.options__3.label" }
+      ],
+      "default": "body"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.featured-collection.settings.header_collection.content"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "min": 1,
+      "max": 6,
+      "step": 1,
+      "default": 4,
+      "label": "t:sections.featured-collection.settings.columns_desktop.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_desktop_slider",
+      "label": "t:sections.featured-collection.settings.enable_desktop_slider.label",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "full_width",
+      "label": "t:sections.featured-collection.settings.full_width.label",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_view_all",
+      "default": true,
+      "label": "t:sections.featured-collection.settings.show_view_all.label",
+      "info": "t:sections.featured-collection.settings.show_view_all.info"
+    },
+    {
+      "type": "select",
+      "id": "view_all_style",
+      "label": "t:sections.featured-collection.settings.view_all_style.label",
+      "options": [
+        { "value": "link", "label": "t:sections.featured-collection.settings.view_all_style.options__1.label" },
+        { "value": "outline", "label": "t:sections.featured-collection.settings.view_all_style.options__2.label" },
+        { "value": "solid", "label": "t:sections.featured-collection.settings.view_all_style.options__3.label" }
+      ],
+      "default": "solid"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:sections.all.colors.label",
+      "info": "t:sections.all.colors.has_cards_info",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.featured-collection.settings.header.content"
+    },
+    {
+      "type": "select",
+      "id": "image_ratio",
+      "options": [
+        { "value": "adapt", "label": "t:sections.featured-collection.settings.image_ratio.options__1.label" },
+        { "value": "portrait", "label": "t:sections.featured-collection.settings.image_ratio.options__2.label" },
+        { "value": "square", "label": "t:sections.featured-collection.settings.image_ratio.options__3.label" }
+      ],
+      "default": "adapt",
+      "label": "t:sections.featured-collection.settings.image_ratio.label"
+    },
+    {
+      "type": "select",
+      "id": "image_shape",
+      "options": [
+        { "value": "default", "label": "t:sections.all.image_shape.options__1.label" },
+        { "value": "arch", "label": "t:sections.all.image_shape.options__2.label" },
+        { "value": "blob", "label": "t:sections.all.image_shape.options__3.label" },
+        { "value": "chevronleft", "label": "t:sections.all.image_shape.options__4.label" },
+        { "value": "chevronright", "label": "t:sections.all.image_shape.options__5.label" },
+        { "value": "diamond", "label": "t:sections.all.image_shape.options__6.label" },
+        { "value": "parallelogram", "label": "t:sections.all.image_shape.options__7.label" },
+        { "value": "round", "label": "t:sections.all.image_shape.options__8.label" }
+      ],
+      "default": "default",
+      "label": "t:sections.all.image_shape.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_secondary_image",
+      "default": false,
+      "label": "t:sections.featured-collection.settings.show_secondary_image.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_vendor",
+      "default": false,
+      "label": "t:sections.featured-collection.settings.show_vendor.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_rating",
+      "default": false,
+      "label": "t:sections.featured-collection.settings.show_rating.label",
+      "info": "t:sections.featured-collection.settings.show_rating.info"
+    },
+    {
+      "type": "select",
+      "id": "quick_add",
+      "default": "none",
+      "label": "t:sections.main-collection-product-grid.settings.quick_add.label",
+      "options": [
+        { "value": "none", "label": "t:sections.main-collection-product-grid.settings.quick_add.options.option_1" },
+        { "value": "standard", "label": "t:sections.main-collection-product-grid.settings.quick_add.options.option_2" },
+        { "value": "bulk", "label": "t:sections.main-collection-product-grid.settings.quick_add.options.option_3" }
+      ]
+    },
+    {
+      "type": "header",
+      "content": "t:sections.featured-collection.settings.header_mobile.content"
+    },
+    {
+      "type": "select",
+      "id": "columns_mobile",
+      "default": "2",
+      "label": "t:sections.featured-collection.settings.columns_mobile.label",
+      "options": [
+        { "value": "1", "label": "1" },
+        { "value": "2", "label": "2" }
+      ]
+    },
+    {
+      "type": "checkbox",
+      "id": "swipe_on_mobile",
+      "default": false,
+      "label": "t:sections.featured-collection.settings.swipe_on_mobile.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 36
+    }
+  ],
+  "presets": [
+    {
+      "name": "Feature Collection QV"
+    }
+  ]
+}
+{% endschema %}
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const quickViewOverlay = document.querySelector('.quick-view-overlay');
+  const modalTitle = document.querySelector('.quick-view-title');
+  const modalImageContainer = document.querySelector('.quick-view-image');
+  const modalPrice = document.querySelector('.quick-view-price');
+  const addToCartBtn = document.querySelector('.quick-view-add-to-cart');
+  const modalSwatchesContainer = document.createElement('div');
+  modalSwatchesContainer.className = 'quick-view-color-swatches';
+  modalSwatchesContainer.style.display = 'flex';
+  modalSwatchesContainer.style.gap = '10px';
+  modalSwatchesContainer.style.marginBottom = '15px';
+
+  modalPrice.insertAdjacentElement('afterend', modalSwatchesContainer);
+
+  let currentProduct = null;
+  let selectedVariantId = null;
+
+  function createSwatch(variant, isSelected) {
+    const swatch = document.createElement('span');
+    swatch.className = 'color-swatch';
+    swatch.style.cssText = `
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: ${isSelected ? '2px solid #007bff' : '1px solid #ccc'};
+      cursor: pointer;
+      background-color: ${variant.options[0].toLowerCase()};
+    `;
+    swatch.title = variant.title;
+    swatch.dataset.variantId = variant.id;
+    swatch.dataset.image = variant.featured_image?.src || currentProduct.featured_image;
+
+    swatch.addEventListener('click', () => {
+      selectedVariantId = variant.id;
+      modalImageContainer.innerHTML = `<img src="${swatch.dataset.image}" alt="${modalTitle.textContent}" style="width:100%;">`;
+      modalPrice.textContent = `₹${(variant.price / 100).toFixed(2)}`;
+      [...modalSwatchesContainer.children].forEach(s => s.style.border = '1px solid #ccc');
+      swatch.style.border = '2px solid #007bff';
+    });
+
+    return swatch;
+  }
+
+  // Handle Quick View Button Click
+  document.querySelectorAll('.btn-quick-view').forEach(button => {
+    button.addEventListener('click', async () => {
+      const handle = button.getAttribute('data-product-handle');
+      try {
+        const res = await fetch(`/products/${handle}.js`);
+        const product = await res.json();
+        currentProduct = product;
+
+        modalTitle.textContent = product.title;
+        modalImageContainer.innerHTML = `<img src="${product.featured_image}" alt="${product.title}" style="width:100%;">`;
+        modalSwatchesContainer.innerHTML = '';
+        selectedVariantId = null;
+
+        const hasVariants = product.variants.length > 1 || product.variants[0].title !== "Default Title";
+
+        if (hasVariants) {
+          product.variants.forEach((variant, idx) => {
+            const swatch = createSwatch(variant, idx === 0);
+            modalSwatchesContainer.appendChild(swatch);
+            if (idx === 0) {
+              selectedVariantId = variant.id;
+              modalPrice.textContent = `₹${(variant.price / 100).toFixed(2)}`;
+            }
+          });
+          modalSwatchesContainer.style.display = 'flex';
+        } else {
+          selectedVariantId = product.variants[0].id;
+          modalPrice.textContent = `₹${(product.variants[0].price / 100).toFixed(2)}`;
+          modalSwatchesContainer.style.display = 'none';
+        }
+
+        quickViewOverlay.style.display = 'flex';
+      } catch (err) {
+        console.error('Quick view error:', err);
+        alert('Unable to load product. Try again.');
+      }
+    });
+  });
+
+  // Quick View Close
+  document.querySelector('.quick-view-close').addEventListener('click', () => {
+    quickViewOverlay.style.display = 'none';
+    modalSwatchesContainer.innerHTML = '';
+    modalSwatchesContainer.style.display = 'flex';
+    modalImageContainer.innerHTML = '';
+    modalPrice.textContent = '';
+    selectedVariantId = null;
+  });
+
+  // Quick View Add to Cart
+  addToCartBtn.addEventListener('click', async () => {
+    if (!selectedVariantId) {
+      alert('Please select a variant.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/cart/add.js', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: selectedVariantId, quantity: 1 })
+      });
+
+      if (res.ok) {
+        alert('Added to cart!');
+        quickViewOverlay.style.display = 'none';
+      } else {
+        const err = await res.json();
+        alert('Error: ' + (err.description || 'Failed to add to cart.'));
+      }
+    } catch (err) {
+      console.error('Cart error:', err);
+      alert('Something went wrong. Try again.');
+    }
+  });
+
+  // --- Collection Page Swatch and Cart ---
+  document.querySelectorAll('.product-card').forEach(card => {
+    const productId = card.dataset.productId;
+    const defaultVariant = card.dataset.defaultVariant;
+
+    const imgEl = card.querySelector('.product-card__image');
+
+    card.querySelectorAll('.color-swatch').forEach(swatch => {
+      swatch.addEventListener('click', () => {
+        const variantId = swatch.dataset.variantId;
+        const image = swatch.dataset.image;
+
+        card.dataset.selectedVariant = variantId;
+
+        if (imgEl && image) imgEl.src = image;
+
+        card.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+        swatch.classList.add('active');
+      });
+    });
+
+    const btn = card.querySelector('.btn-add-to-cart');
+    if (btn) {
+      btn.addEventListener('click', async () => {
+        const variantToAdd = card.dataset.selectedVariant || defaultVariant;
+        if (!variantToAdd) {
+          alert('Please select a variant.');
+          return;
+        }
+
+        try {
+          const res = await fetch('/cart/add.js', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: variantToAdd, quantity: 1 })
+          });
+
+          if (res.ok) {
+            alert('Added to cart!');
+          } else {
+            const err = await res.json();
+            alert('Error: ' + (err.description || 'Unable to add to cart.'));
+          }
+        } catch (err) {
+          console.error('Cart error:', err);
+          alert('Something went wrong.');
+        }
+      });
+    }
+  });
+});
+</script>
+{% render 'quick-view-css' %}
